@@ -13,17 +13,22 @@
         .game-container { display:flex; flex-direction:column; align-items:center; width:100%; max-width:420px; height:100dvh; padding:env(safe-area-inset-top,8px) 8px env(safe-area-inset-bottom,8px); }
 
         /* Score bar */
-        .score-bar { display:flex; align-items:center; justify-content:space-between; width:100%; padding:6px 12px; flex-shrink:0; }
-        .score-left { display:flex; flex-direction:column; gap:2px; }
-        .score-row { display:flex; align-items:center; gap:6px; font-size:18px; font-weight:700; }
-        .score-icon { font-size:16px; }
+        .score-bar { display:flex; align-items:flex-start; justify-content:space-between; width:100%; padding:8px 12px; flex-shrink:0; }
+        .score-left { display:flex; flex-direction:column; gap:4px; flex:1; }
+        .score-row { display:flex; align-items:center; gap:8px; font-size:16px; font-weight:700; }
+        .score-label { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px; min-width:50px; }
+        .score-value { font-size:18px; color:#fff; }
+        .score-icon { font-size:14px; }
         .score-icon.green { color:#9C27B0; }
         .score-icon.orange { color:#FF9800; }
         .highest-tile { font-size:56px; font-weight:900; color:#fff; line-height:1; text-shadow:2px 2px 8px rgba(0,0,0,0.5); }
-        .level-badge { display:flex; align-items:center; gap:6px; font-size:14px; font-weight:700; color:#FF9800; margin-top:2px; }
-        .level-badge .lvl-num { font-size:18px; color:#FDD835; }
-        .level-bar { width:100%; height:4px; background:#333; border-radius:2px; overflow:hidden; margin-top:2px; }
-        .level-bar-fill { height:100%; background:linear-gradient(90deg,#FF9800,#FDD835); border-radius:2px; transition:width 0.5s ease; }
+        .level-container { background:#2a2a2a; border-radius:10px; padding:6px 10px; margin-top:4px; }
+        .level-header { display:flex; align-items:center; justify-content:space-between; }
+        .level-badge { display:flex; align-items:center; gap:4px; font-size:16px; font-weight:800; color:#FF9800; }
+        .level-badge .lvl-num { font-size:22px; color:#FDD835; }
+        .level-progress-text { font-size:10px; color:#888; }
+        .level-bar { width:100%; height:8px; background:#444; border-radius:4px; overflow:hidden; margin-top:4px; }
+        .level-bar-fill { height:100%; background:linear-gradient(90deg,#FF9800,#FDD835); border-radius:4px; transition:width 0.5s ease; box-shadow:0 0 8px rgba(255,152,0,0.4); }
         @keyframes level-up-flash { 0%{opacity:1;transform:translate(-50%,-50%) scale(0.5)} 50%{transform:translate(-50%,-50%) scale(1.3)} 100%{opacity:0;transform:translate(-50%,-50%) scale(2)} }
         .level-up-pop { position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;font-weight:900;color:#FDD835;pointer-events:none;z-index:70;text-shadow:0 3px 15px rgba(0,0,0,0.6);animation:level-up-flash 1.2s ease-out forwards; }
 
@@ -197,10 +202,15 @@
     <div class="game-container">
         <div class="score-bar">
             <div class="score-left">
-                <div class="score-row"><span class="score-icon green">&#9827;</span><span id="score">0</span></div>
-                <div class="score-row"><span class="score-icon orange">&#9679;</span><span id="best">0</span></div>
-                <div class="level-badge">LVL <span class="lvl-num" id="levelDisplay">1</span></div>
-                <div class="level-bar"><div class="level-bar-fill" id="levelBar" style="width:0%"></div></div>
+                <div class="score-row"><span class="score-label">Score</span><span class="score-value" id="score">0</span></div>
+                <div class="score-row"><span class="score-label">Karriere</span><span class="score-value" id="best" style="color:#FF9800">0</span></div>
+                <div class="level-container">
+                    <div class="level-header">
+                        <div class="level-badge">LVL <span class="lvl-num" id="levelDisplay">1</span></div>
+                        <span class="level-progress-text" id="levelProgressText">0 / 100k</span>
+                    </div>
+                    <div class="level-bar"><div class="level-bar-fill" id="levelBar" style="width:0%"></div></div>
+                </div>
             </div>
             <div class="highest-tile" id="highestDisplay">1</div>
         </div>
@@ -288,8 +298,12 @@ function updateLevel() {
     document.getElementById('levelDisplay').textContent = currentLevel;
     // Progress bar within current level
     const levelStart = (currentLevel - 1) * LEVEL_THRESHOLD;
-    const progress = ((score - levelStart) / LEVEL_THRESHOLD) * 100;
+    const progressPts = score - levelStart;
+    const progress = (progressPts / LEVEL_THRESHOLD) * 100;
     document.getElementById('levelBar').style.width = Math.min(100, progress) + '%';
+    // Progress text
+    const fmt = (n) => n >= 1000 ? Math.floor(n/1000) + 'k' : n;
+    document.getElementById('levelProgressText').textContent = fmt(progressPts) + ' / ' + fmt(LEVEL_THRESHOLD);
 }
 
 function showLevelUp(lvl) {
@@ -471,15 +485,33 @@ function placeShape(row, col) {
 }
 
 function findMergeTarget(connected) {
-    // The merge result should appear at the tile that TRIGGERED the merge:
-    // = the last placed tile that is part of this connected group
+    // The merge result should appear where the NEW tile touches the EXISTING group.
+    // Find the last-placed cell that is adjacent to a non-placed cell in the group.
+    // That's the "meeting point" where the merge was triggered.
+    const placedSet = new Set(lastPlacedCells.map(([r,c]) => `${r},${c}`));
+    const connSet = new Set(connected.map(([r,c]) => `${r},${c}`));
+
+    // Option 1: The placed tile itself (it triggered the merge by joining the group)
     for (let i = lastPlacedCells.length - 1; i >= 0; i--) {
         const [pr, pc] = lastPlacedCells[i];
-        for (const [cr, cc] of connected) {
-            if (cr === pr && cc === pc) return [pr, pc];
+        if (!connSet.has(`${pr},${pc}`)) continue;
+        // Check if this placed cell is adjacent to a non-placed cell in the group
+        const neighbors = [[pr-1,pc],[pr+1,pc],[pr,pc-1],[pr,pc+1]];
+        for (const [nr, nc] of neighbors) {
+            const nk = `${nr},${nc}`;
+            if (connSet.has(nk) && !placedSet.has(nk)) {
+                // This is the contact point — return the placed tile's position
+                return [pr, pc];
+            }
         }
     }
-    // Fallback: last cell in connected group (most recently scanned)
+
+    // Fallback: first placed cell that's in the group
+    for (const [pr, pc] of lastPlacedCells) {
+        if (connSet.has(`${pr},${pc}`)) return [pr, pc];
+    }
+
+    // Last fallback
     return connected[connected.length - 1];
 }
 
