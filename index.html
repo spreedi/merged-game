@@ -38,7 +38,7 @@
         /* Shape preview area */
         .shape-area { display:flex; align-items:center; justify-content:center; gap:16px; width:100%; padding:8px 12px; flex-shrink:0; }
         .shape-preview { display:grid; gap:3px; }
-        .shape-cell { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; }
+        .shape-cell { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; }
         .shape-cell.empty { background:transparent; }
         .shape-cell.filled { }
 
@@ -104,12 +104,12 @@
         .m-letter { font-size:32px; font-weight:900; color:#333; text-shadow:none; }
 
         /* Mini dots for shape preview */
-        .mini-dots { position:relative; width:22px; height:22px; }
+        .mini-dots { position:relative; width:38px; height:38px; }
         .mini-dot {
-            position:absolute; width:5px; height:5px;
+            position:absolute; width:9px; height:9px;
             background:rgba(0,0,0,0.55); border-radius:50%;
         }
-        .mini-dots.dots-1 .mini-dot { width:7px; height:7px; top:50%; left:50%; transform:translate(-50%,-50%); }
+        .mini-dots.dots-1 .mini-dot { width:12px; height:12px; top:50%; left:50%; transform:translate(-50%,-50%); }
         .mini-dots.dots-2 .mini-dot:nth-child(1) { top:15%; right:15%; }
         .mini-dots.dots-2 .mini-dot:nth-child(2) { bottom:15%; left:15%; }
         .mini-dots.dots-3 .mini-dot:nth-child(1) { top:10%; right:10%; }
@@ -269,6 +269,7 @@ let currentLevel = 1;
 let autoSkipCount = 0; // shapes auto-skipped because they don't fit
 let gameStartTime = Date.now();
 let timerInterval = null;
+let cascadeCount = 0; // counts chain merges for bonus multiplier
 const LEVEL_THRESHOLD = 100000; // 100k per level
 const MAX_AUTO_SKIP = 10; // max auto-skips before forcing game over
 
@@ -418,8 +419,8 @@ function renderShapePreview() {
     const maxR = Math.max(...currentShape.map(c => c.r)) + 1;
     const maxC = Math.max(...currentShape.map(c => c.c)) + 1;
 
-    container.style.gridTemplateColumns = `repeat(${maxC}, 28px)`;
-    container.style.gridTemplateRows = `repeat(${maxR}, 28px)`;
+    container.style.gridTemplateColumns = `repeat(${maxC}, 48px)`;
+    container.style.gridTemplateRows = `repeat(${maxR}, 48px)`;
     container.style.display = 'grid';
     container.style.gap = '3px';
 
@@ -486,7 +487,8 @@ function placeShape(row, col) {
     // Store last placed cells for merge target detection
     lastPlacedCells = placedCells.slice();
 
-    // Check merges for each placed cell
+    // Reset cascade counter and check merges
+    cascadeCount = 0;
     setTimeout(() => {
         checkAllMerges();
     }, 150);
@@ -538,13 +540,21 @@ function checkAllMerges() {
             if (connected.length >= 3) {
                 merged = true;
                 totalMerges++;
+                cascadeCount++;
                 updateMergeCount();
                 const nextVal = NEXT_VALUE[val];
 
-                const mergePoints = calcMergeScore(val, connected.length);
+                // Cascade bonus: 1x first merge, 2x second, 4x third, etc.
+                const cascadeMultiplier = Math.pow(2, cascadeCount - 1);
+                const basePoints = calcMergeScore(val, connected.length);
+                const mergePoints = Math.round(basePoints * cascadeMultiplier);
                 score += mergePoints;
                 updateScore();
-                showPointsPop(mergePoints);
+                if (cascadeCount > 1) {
+                    showPointsPop(mergePoints, 'COMBO x' + cascadeMultiplier + '!');
+                } else {
+                    showPointsPop(mergePoints);
+                }
 
                 // Merge target = the placed tile that triggered this merge
                 const target = findMergeTarget(connected);
@@ -793,13 +803,21 @@ function updateScore() {
     updateLevel();
 }
 
-function showPointsPop(points) {
+function showPointsPop(points, comboText) {
     const pop = document.createElement('div');
     pop.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:900;pointer-events:none;z-index:60;text-shadow:0 2px 8px rgba(0,0,0,0.5);animation:score-fly 0.8s ease-out forwards;';
     pop.style.color = points >= 0 ? '#4CAF50' : '#F44336';
-    pop.textContent = (points >= 0 ? '+' : '') + points.toLocaleString();
+    let text = (points >= 0 ? '+' : '') + points.toLocaleString();
+    if (comboText) {
+        pop.style.color = '#FDD835';
+        pop.style.fontSize = '34px';
+        text += '\n' + comboText;
+        pop.style.whiteSpace = 'pre-line';
+        pop.style.textAlign = 'center';
+    }
+    pop.textContent = text;
     document.body.appendChild(pop);
-    setTimeout(() => pop.remove(), 900);
+    setTimeout(() => pop.remove(), 1100);
 }
 
 function updateHighest() {
