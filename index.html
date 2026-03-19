@@ -383,9 +383,19 @@ function pickValue() {
     return unlockedValues[0];
 }
 
+function canFitDomino() {
+    // Check if there are at least 2 adjacent empty cells (horizontal or vertical)
+    for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++)
+            if (grid[r][c] === 0) {
+                if (c + 1 < COLS && grid[r][c+1] === 0) return true;
+                if (r + 1 < ROWS && grid[r+1][c] === 0) return true;
+            }
+    return false;
+}
+
 function generateShape() {
-    // Dominos only after first merge (when more than 1 value unlocked)
-    const canDomino = totalMerges > 0;
+    const canDomino = totalMerges > 0 && canFitDomino();
     const isSingle = !canDomino || Math.random() < 0.35;
 
     if (isSingle) {
