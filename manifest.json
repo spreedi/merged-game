@@ -1,0 +1,16 @@
+{
+  "name": "Merged! Dice Puzzle",
+  "short_name": "Merged!",
+  "description": "Merge dice tiles to reach the highest score!",
+  "start_url": "/merged-game/",
+  "scope": "/merged-game/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1a1a",
+  "theme_color": "#1a1a1a",
+  "categories": ["games", "puzzle"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
