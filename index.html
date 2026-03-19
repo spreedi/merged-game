@@ -457,7 +457,25 @@ function canPlaceShape(row, col) {
 }
 
 function placeShape(row, col) {
-    if (!canPlaceShape(row, col)) return;
+    // If direct placement fails, try all offsets where clicked cell is still part of the shape
+    if (!canPlaceShape(row, col) && currentShape && currentShape.length > 1) {
+        let placed = false;
+        for (const cell of currentShape) {
+            const tryR = row - cell.r;
+            const tryC = col - cell.c;
+            if (tryR !== row || tryC !== col) { // skip the one we already tried
+                if (canPlaceShape(tryR, tryC)) {
+                    row = tryR;
+                    col = tryC;
+                    placed = true;
+                    break;
+                }
+            }
+        }
+        if (!placed) return;
+    } else if (!canPlaceShape(row, col)) {
+        return;
+    }
 
     // Save state for undo
     prevState = {
