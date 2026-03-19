@@ -232,6 +232,7 @@
         <div class="toolbar">
             <button class="tool-btn" id="undoBtn" disabled onclick="undo()">&#8617;</button>
             <button class="tool-btn" id="trashBtn" onclick="skipShape()" style="position:relative">&#128465;<span class="trash-count" id="trashCount">3</span></button>
+            <button class="tool-btn" onclick="confirmRestart()" title="Neustart">&#128260;</button>
         </div>
     </div>
 
@@ -923,6 +924,12 @@ function init() {
 }
 
 function restartGame() { init(); }
+
+function confirmRestart() {
+    if (confirm('Spiel neu starten? Der aktuelle Fortschritt dieser Runde geht verloren.')) {
+        init();
+    }
+}
 
 function resetAllProgress() {
     localStorage.removeItem('merged_career');
