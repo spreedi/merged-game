@@ -21,7 +21,10 @@
         .score-icon { font-size:14px; }
         .score-icon.green { color:#9C27B0; }
         .score-icon.orange { color:#FF9800; }
-        .highest-tile { font-size:56px; font-weight:900; color:#fff; line-height:1; text-shadow:2px 2px 8px rgba(0,0,0,0.5); }
+        .score-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+        .stat-row { display:flex; align-items:center; gap:6px; }
+        .stat-icon { font-size:16px; }
+        .stat-value { font-size:20px; font-weight:800; color:#fff; }
         .level-container { background:#2a2a2a; border-radius:10px; padding:6px 10px; margin-top:4px; }
         .level-header { display:flex; align-items:center; justify-content:space-between; }
         .level-badge { display:flex; align-items:center; gap:4px; font-size:16px; font-weight:800; color:#FF9800; }
@@ -212,7 +215,10 @@
                     <div class="level-bar"><div class="level-bar-fill" id="levelBar" style="width:0%"></div></div>
                 </div>
             </div>
-            <div class="highest-tile" id="highestDisplay">1</div>
+            <div class="score-right">
+                <div class="stat-row"><span class="stat-icon">⏱</span><span class="stat-value" id="timerDisplay">0:00</span></div>
+                <div class="stat-row"><span class="stat-icon">🔀</span><span class="stat-value" id="mergeCount">0</span></div>
+            </div>
         </div>
 
         <div class="shape-area">
@@ -261,6 +267,8 @@ let hoverPos = null;
 let totalMerges = 0;
 let currentLevel = 1;
 let autoSkipCount = 0; // shapes auto-skipped because they don't fit
+let gameStartTime = Date.now();
+let timerInterval = null;
 const LEVEL_THRESHOLD = 100000; // 100k per level
 const MAX_AUTO_SKIP = 10; // max auto-skips before forcing game over
 
@@ -530,6 +538,7 @@ function checkAllMerges() {
             if (connected.length >= 3) {
                 merged = true;
                 totalMerges++;
+                updateMergeCount();
                 const nextVal = NEXT_VALUE[val];
 
                 const mergePoints = calcMergeScore(val, connected.length);
@@ -690,6 +699,8 @@ function canPlaceShapeAnywhere() {
 }
 
 function showGameOver() {
+    stopTimer();
+    const gameTime = formatTime(Date.now() - gameStartTime);
     const bonus = calcEndBonus();
     const roundScore = score - parseInt(localStorage.getItem('merged_career') || '0');
     score += bonus;
@@ -705,6 +716,7 @@ function showGameOver() {
     const details = document.getElementById('endDetails');
     details.innerHTML =
         `Runde: ${roundScore.toLocaleString()} Punkte<br>` +
+        `Merges: ${totalMerges} | Spielzeit: ${gameTime}<br>` +
         `Bonus (${highestTile === 'M' ? 'M' : highestTile}-Tile, ${totalMerges} Merges): +${bonus.toLocaleString()}<br>` +
         `Papierkorb: ${trashUses}x genutzt<br>` +
         `Level: ${currentLevel}`;
@@ -798,7 +810,30 @@ function updateHighest() {
             if (v !== 0) { const i = VALUE_ORDER.indexOf(v); if (i > m) m = i; }
         }
     highestTile = VALUE_ORDER[m];
-    document.getElementById('highestDisplay').textContent = highestTile === 'M' ? 'M' : highestTile;
+}
+
+function updateMergeCount() {
+    document.getElementById('mergeCount').textContent = totalMerges;
+}
+
+function formatTime(ms) {
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    if (h > 0) return h + ':' + String(m % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    return m + ':' + String(s % 60).padStart(2, '0');
+}
+
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    gameStartTime = Date.now();
+    timerInterval = setInterval(() => {
+        document.getElementById('timerDisplay').textContent = formatTime(Date.now() - gameStartTime);
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
 }
 
 // === TRASH (skip shape — escalating penalty, unlimited uses) ===
@@ -862,6 +897,8 @@ function init() {
     updateScore();
     updateHighest();
     updateLevel();
+    updateMergeCount();
+    startTimer();
     generateShape();
     renderGrid();
     document.getElementById('overlay').classList.remove('active');
