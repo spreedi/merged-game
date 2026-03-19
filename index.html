@@ -18,6 +18,12 @@
         .score-icon.green { color:#9C27B0; }
         .score-icon.orange { color:#FF9800; }
         .highest-tile { font-size:56px; font-weight:900; color:#fff; line-height:1; text-shadow:2px 2px 8px rgba(0,0,0,0.5); }
+        .level-badge { display:flex; align-items:center; gap:6px; font-size:14px; font-weight:700; color:#FF9800; margin-top:2px; }
+        .level-badge .lvl-num { font-size:18px; color:#FDD835; }
+        .level-bar { width:100%; height:4px; background:#333; border-radius:2px; overflow:hidden; margin-top:2px; }
+        .level-bar-fill { height:100%; background:linear-gradient(90deg,#FF9800,#FDD835); border-radius:2px; transition:width 0.5s ease; }
+        @keyframes level-up-flash { 0%{opacity:1;transform:translate(-50%,-50%) scale(0.5)} 50%{transform:translate(-50%,-50%) scale(1.3)} 100%{opacity:0;transform:translate(-50%,-50%) scale(2)} }
+        .level-up-pop { position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;font-weight:900;color:#FDD835;pointer-events:none;z-index:70;text-shadow:0 3px 15px rgba(0,0,0,0.6);animation:level-up-flash 1.2s ease-out forwards; }
         .shape-area { display:flex; align-items:center; justify-content:center; gap:16px; width:100%; padding:8px 12px; flex-shrink:0; }
         .shape-preview { display:grid; gap:3px; }
         .shape-cell { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; }
@@ -114,6 +120,8 @@
             <div class="score-left">
                 <div class="score-row"><span class="score-icon green">&#9827;</span><span id="score">0</span></div>
                 <div class="score-row"><span class="score-icon orange">&#9679;</span><span id="best">0</span></div>
+                <div class="level-badge">LVL <span class="lvl-num" id="levelDisplay">1</span></div>
+                <div class="level-bar"><div class="level-bar-fill" id="levelBar" style="width:0%"></div></div>
             </div>
             <div class="highest-tile" id="highestDisplay">1</div>
         </div>
@@ -132,19 +140,24 @@
         <h2>Game Over!</h2>
         <div id="endDetails" style="text-align:center;margin:8px 0;font-size:14px;color:#aaa;line-height:1.8"></div>
         <div class="final-score" id="finalScore">0</div>
-        <div class="final-label">Gesamt</div>
+        <div class="final-label">Karriere-Score</div>
         <div id="highscoreMsg" style="font-size:16px;color:#4CAF50;font-weight:700;margin-top:4px"></div>
-        <button class="btn" onclick="restartGame()">Nochmal spielen</button>
+        <button class="btn" onclick="restartGame()">N\u00e4chste Runde \u25b6</button>
+        <button class="btn" onclick="resetAllProgress()" style="background:#555;font-size:13px;padding:10px 24px;margin-top:4px">Fortschritt zur\u00fccksetzen</button>
     </div>
 <script>
 const COLS=5,ROWS=5;
 const TILE_CLASSES={1:'tile-1',2:'tile-2',3:'tile-3',4:'tile-4',5:'tile-5',6:'tile-6','M':'tile-M'};
 const NEXT_VALUE={1:2,2:3,3:4,4:5,5:6,6:'M','M':'BOMB'};
 const VALUE_ORDER=[1,2,3,4,5,6,'M'];
-let grid=[],score=0,bestScore=parseInt(localStorage.getItem('merged_best3')||'0'),prevState=null,trashUses=0,highestTile=1,unlockedValues=[1],currentShape=null,hoverPos=null,totalMerges=0;
+let grid=[],score=parseInt(localStorage.getItem('merged_career')||'0'),bestScore=parseInt(localStorage.getItem('merged_best3')||'0'),prevState=null,trashUses=0,highestTile=1,unlockedValues=[1],currentShape=null,hoverPos=null,totalMerges=0,currentLevel=1,autoSkipCount=0;
+const LEVEL_THRESHOLD=100000,MAX_AUTO_SKIP=10;
 const BASE_POINTS={1:10,2:30,3:90,4:270,5:810,6:2430,'M':7290};
 function getGridFullness(){let f=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c]!==0)f++;return f/(ROWS*COLS)}
-function getDifficultyMultiplier(){return 1+getGridFullness()*2}
+function getDifficultyMultiplier(){return(1+getGridFullness()*2)*(1+(currentLevel-1)*0.2)}
+function calcLevel(){return Math.floor(score/LEVEL_THRESHOLD)+1}
+function updateLevel(){const nl=calcLevel();if(nl>currentLevel){currentLevel=nl;showLevelUp(currentLevel);if(navigator.vibrate)navigator.vibrate([30,50,30,50,80])}else{currentLevel=nl}document.getElementById('levelDisplay').textContent=currentLevel;const ls=(currentLevel-1)*LEVEL_THRESHOLD;const p=((score-ls)/LEVEL_THRESHOLD)*100;document.getElementById('levelBar').style.width=Math.min(100,p)+'%'}
+function showLevelUp(l){const p=document.createElement('div');p.className='level-up-pop';p.textContent='LEVEL '+l+'!';document.body.appendChild(p);setTimeout(()=>p.remove(),1300)}
 function calcMergeScore(v,g){return Math.round(BASE_POINTS[v]*g*getDifficultyMultiplier())}
 function calcTrashPenalty(){return(trashUses+1)*(trashUses+1)*50}
 function calcEndBonus(){let b=0;const tb={1:0,2:50,3:200,4:500,5:1500,6:5000,'M':15000};b+=tb[highestTile]||0;b+=totalMerges*10;b+=(unlockedValues.length-1)*200;return b}
@@ -158,21 +171,22 @@ function placeShape(row,col){if(!canPlaceShape(row,col))return;prevState={grid:g
 function checkAllMerges(){let merged=false;const vis=new Set();for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const v=grid[r][c];if(v===0||vis.has(r+','+c))continue;const conn=findConnected(r,c,v);for(const[cr,cc]of conn)vis.add(cr+','+cc);if(conn.length>=3){merged=true;totalMerges++;const nv=NEXT_VALUE[v];const pts=calcMergeScore(v,conn.length);score+=pts;updateScore();showPointsPop(pts);const ctr=conn[Math.floor(conn.length/2)];if(nv==='BOMB'){for(const[cr,cc]of conn)grid[cr][cc]=0;triggerBomb(ctr[0],ctr[1]);return}for(const[cr,cc]of conn)grid[cr][cc]=0;grid[ctr[0]][ctr[1]]=nv;if(!unlockedValues.includes(nv)&&nv!=='BOMB'){unlockedValues.push(nv);unlockedValues.sort((a,b)=>VALUE_ORDER.indexOf(a)-VALUE_ORDER.indexOf(b))}updateHighest();renderGrid();animateCell(ctr[0],ctr[1],'merge-anim');if(navigator.vibrate)navigator.vibrate([20,30,20])}}if(merged)setTimeout(()=>checkAllMerges(),300);else afterMerge()}
 function findConnected(row,col,val){const vis=new Set(),res=[],stk=[[row,col]];while(stk.length>0){const[r,c]=stk.pop();const k=r+','+c;if(vis.has(k)||r<0||r>=ROWS||c<0||c>=COLS||grid[r][c]!==val)continue;vis.add(k);res.push([r,c]);stk.push([r-1,c],[r+1,c],[r,c-1],[r,c+1])}return res}
 function triggerBomb(row,col){const tc=[];for(let r=row-1;r<=row+1;r++)for(let c=col-1;c<=col+1;c++)if(r>=0&&r<ROWS&&c>=0&&c<COLS){tc.push([r,c]);grid[r][c]=0}const bb=Math.round(500*getDifficultyMultiplier());score+=bb;updateScore();showPointsPop(bb);updateHighest();renderGrid();const fl=document.createElement('div');fl.className='bomb-overlay';document.body.appendChild(fl);setTimeout(()=>fl.remove(),400);for(const[r,c]of tc){const i=r*COLS+c;const cells=document.querySelectorAll('.cell');if(cells[i])cells[i].classList.add(r===row&&c===col?'explode-center':'explode-shockwave')}if(navigator.vibrate)navigator.vibrate([50,30,80,30,50]);setTimeout(()=>{renderGrid();checkAllMerges()},650)}
-function afterMerge(){generateShape();if(isGameOver())setTimeout(()=>showGameOver(),300)}
-function showGameOver(){const bonus=calcEndBonus();const gs=score;const ts=gs+bonus;score=ts;const at=parseInt(localStorage.getItem('merged_alltime')||'0');localStorage.setItem('merged_alltime',at+ts);if(ts>bestScore){bestScore=ts;localStorage.setItem('merged_best3',bestScore)}document.getElementById('endDetails').innerHTML='Spielpunkte: '+gs.toLocaleString()+'<br>Bonus ('+(highestTile==='M'?'M':highestTile)+'-Tile, '+totalMerges+' Merges): +'+bonus.toLocaleString()+'<br>Papierkorb: '+trashUses+'x genutzt';document.getElementById('finalScore').textContent=ts.toLocaleString();const h=document.getElementById('highscoreMsg');if(ts>=bestScore){h.textContent='Neuer Highscore!';h.style.color='#FF9800'}else{h.textContent='Highscore: '+bestScore.toLocaleString();h.style.color='#4CAF50'}updateScore();document.getElementById('overlay').classList.add('active')}
-function isGameOver(){if(!currentShape)return true;const orig=JSON.parse(JSON.stringify(currentShape));for(let rot=0;rot<4;rot++){for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(canPlaceShape(r,c)){currentShape=orig;return false}const rt=currentShape.map(c=>({...c,r:c.c,c:-c.r}));const mr=Math.min(...rt.map(c=>c.r)),mc=Math.min(...rt.map(c=>c.c));currentShape=rt.map(c=>({...c,r:c.r-mr,c:c.c-mc}))}currentShape=orig;return true}
-// Delegated click handler on grid
+function afterMerge(){generateShape();if(!canPlaceShapeAnywhere()){if(hasEmptyCells()){autoSkipCount++;if(autoSkipCount<=MAX_AUTO_SKIP){currentShape=[{r:0,c:0,value:pickValue()}];renderShapePreview();if(!canPlaceShapeAnywhere()){setTimeout(()=>showGameOver(),300)}return}}setTimeout(()=>showGameOver(),300)}else{autoSkipCount=0}}
+function hasEmptyCells(){for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c]===0)return true;return false}
+function canPlaceShapeAnywhere(){if(!currentShape)return false;const orig=JSON.parse(JSON.stringify(currentShape));for(let rot=0;rot<4;rot++){for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(canPlaceShape(r,c)){currentShape=orig;return true}const rt=currentShape.map(c=>({...c,r:c.c,c:-c.r}));const mr=Math.min(...rt.map(c=>c.r)),mc=Math.min(...rt.map(c=>c.c));currentShape=rt.map(c=>({...c,r:c.r-mr,c:c.c-mc}))}currentShape=orig;return false}
+function showGameOver(){const bonus=calcEndBonus();const roundScore=score-parseInt(localStorage.getItem('merged_career')||'0');score+=bonus;localStorage.setItem('merged_career',score);if(score>bestScore){bestScore=score;localStorage.setItem('merged_best3',bestScore)}const d=document.getElementById('endDetails');d.innerHTML='Runde: '+roundScore.toLocaleString()+' Punkte<br>Bonus ('+(highestTile==='M'?'M':highestTile)+'-Tile, '+totalMerges+' Merges): +'+bonus.toLocaleString()+'<br>Papierkorb: '+trashUses+'x genutzt<br>Level: '+currentLevel;document.getElementById('finalScore').textContent=score.toLocaleString();const h=document.getElementById('highscoreMsg');if(score>=bestScore){h.textContent='\ud83c\udfc6 Neuer Highscore!';h.style.color='#FF9800'}else{h.textContent='Highscore: '+bestScore.toLocaleString();h.style.color='#4CAF50'}updateScore();updateLevel();document.getElementById('overlay').classList.add('active')}
 (function(){const g=document.getElementById('grid');g.addEventListener('click',(e)=>{const cell=e.target.closest('.cell');if(!cell)return;const r=parseInt(cell.dataset.r),c=parseInt(cell.dataset.c);if(!isNaN(r)&&!isNaN(c)&&grid[r][c]===0)placeShape(r,c)})})();
 function renderGrid(){const g=document.getElementById('grid');g.innerHTML='';for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const cell=document.createElement('div');cell.className='cell';cell.dataset.r=r;cell.dataset.c=c;const v=grid[r][c];if(v!==0){cell.classList.add(TILE_CLASSES[v],'occupied');cell.appendChild(createDots(v,false))}g.appendChild(cell)}}
 function animateCell(r,c,cls){const i=r*COLS+c;const cells=document.querySelectorAll('.cell');if(cells[i])cells[i].classList.add(cls)}
-function updateScore(){document.getElementById('score').textContent=score.toLocaleString();if(score>bestScore){bestScore=score;localStorage.setItem('merged_best3',bestScore)}document.getElementById('best').textContent=bestScore.toLocaleString()}
+function updateScore(){document.getElementById('score').textContent=score.toLocaleString();if(score>bestScore){bestScore=score;localStorage.setItem('merged_best3',bestScore)}document.getElementById('best').textContent=bestScore.toLocaleString();localStorage.setItem('merged_career',score);updateLevel()}
 function showPointsPop(p){const d=document.createElement('div');d.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:900;pointer-events:none;z-index:60;text-shadow:0 2px 8px rgba(0,0,0,0.5);animation:score-fly 0.8s ease-out forwards;';d.style.color=p>=0?'#4CAF50':'#F44336';d.textContent=(p>=0?'+':'')+p.toLocaleString();document.body.appendChild(d);setTimeout(()=>d.remove(),900)}
 function updateHighest(){let m=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const v=grid[r][c];if(v!==0){const i=VALUE_ORDER.indexOf(v);if(i>m)m=i}}highestTile=VALUE_ORDER[m];document.getElementById('highestDisplay').textContent=highestTile==='M'?'M':highestTile}
 function skipShape(){const p=calcTrashPenalty();prevState={grid:grid.map(r=>[...r]),score,unlockedValues:[...unlockedValues],trashUses,totalMerges,currentShape:JSON.parse(JSON.stringify(currentShape))};document.getElementById('undoBtn').disabled=false;score=Math.max(0,score-p);trashUses++;updateScore();updateTrashUI();showPointsPop(-p);generateShape();if(navigator.vibrate)navigator.vibrate([15,20,15])}
 function updateTrashUI(){document.getElementById('trashCount').textContent='-'+calcTrashPenalty()}
 function undo(){if(!prevState)return;grid=prevState.grid;score=prevState.score;unlockedValues=prevState.unlockedValues;trashUses=prevState.trashUses;totalMerges=prevState.totalMerges||totalMerges;currentShape=prevState.currentShape;prevState=null;document.getElementById('undoBtn').disabled=true;hoverPos=null;updateScore();updateTrashUI();updateHighest();renderShapePreview();renderGrid()}
-function init(){grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));score=0;highestTile=1;trashUses=0;totalMerges=0;unlockedValues=[1];prevState=null;hoverPos=null;document.getElementById('undoBtn').disabled=true;updateTrashUI();updateScore();updateHighest();generateShape();renderGrid();document.getElementById('overlay').classList.remove('active')}
+function init(){grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));score=parseInt(localStorage.getItem('merged_career')||'0');bestScore=parseInt(localStorage.getItem('merged_best3')||'0');highestTile=1;trashUses=0;totalMerges=0;autoSkipCount=0;unlockedValues=[1];prevState=null;hoverPos=null;currentLevel=calcLevel();document.getElementById('undoBtn').disabled=true;updateTrashUI();updateScore();updateHighest();updateLevel();generateShape();renderGrid();document.getElementById('overlay').classList.remove('active')}
 function restartGame(){init()}
+function resetAllProgress(){localStorage.removeItem('merged_career');localStorage.removeItem('merged_best3');init()}
 init();
 </script>
 </body>
