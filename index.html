@@ -11,65 +11,103 @@
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
         body { background:#1a1a1a; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; display:flex; flex-direction:column; align-items:center; min-height:100dvh; overflow:hidden; color:#fff; }
         .game-container { display:flex; flex-direction:column; align-items:center; width:100%; max-width:420px; height:100dvh; padding:env(safe-area-inset-top,8px) 8px env(safe-area-inset-bottom,8px); }
-        .score-bar { display:flex; align-items:center; justify-content:space-between; width:100%; padding:8px 12px; flex-shrink:0; }
+        .score-bar { display:flex; align-items:center; justify-content:space-between; width:100%; padding:6px 12px; flex-shrink:0; }
         .score-left { display:flex; flex-direction:column; gap:2px; }
         .score-row { display:flex; align-items:center; gap:6px; font-size:18px; font-weight:700; }
         .score-icon { font-size:16px; }
-        .score-icon.green { color:#4CAF50; }
+        .score-icon.green { color:#9C27B0; }
         .score-icon.orange { color:#FF9800; }
-        .highest-tile { font-size:64px; font-weight:900; color:#fff; line-height:1; text-shadow:2px 2px 8px rgba(0,0,0,0.5); }
-        .next-area { display:flex; align-items:center; gap:10px; width:100%; padding:6px 12px; flex-shrink:0; }
-        .next-label { font-size:13px; color:#888; }
-        .next-preview { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+        .highest-tile { font-size:56px; font-weight:900; color:#fff; line-height:1; text-shadow:2px 2px 8px rgba(0,0,0,0.5); }
+        .shape-area { display:flex; align-items:center; justify-content:center; gap:16px; width:100%; padding:8px 12px; flex-shrink:0; }
+        .shape-preview { display:grid; gap:3px; }
+        .shape-cell { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; }
+        .shape-cell.empty { background:transparent; }
+        .rotate-btn { width:44px; height:44px; background:#333; border:none; border-radius:12px; color:#aaa; font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform 0.1s; }
+        .rotate-btn:active { transform:scale(0.9); background:#444; }
         .grid-area { flex:1; display:flex; align-items:center; justify-content:center; width:100%; padding:4px 0; }
-        .grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; padding:8px; border-radius:16px; background:#222; }
-        .cell { width:62px; height:62px; background:#333; border-radius:14px; cursor:pointer; transition:transform 0.1s; position:relative; display:flex; align-items:center; justify-content:center; }
+        .grid { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; padding:8px; border-radius:16px; background:#222; }
+        .cell { width:60px; height:60px; background:#333; border-radius:13px; cursor:pointer; transition:transform 0.1s, background 0.15s; position:relative; display:flex; align-items:center; justify-content:center; }
         .cell:active:not(.occupied) { transform:scale(0.92); }
         .cell.occupied { cursor:default; }
-        .tile-1 { background:#4CAF50; } .tile-2 { background:#FDD835; } .tile-3 { background:#FF9800; }
-        .tile-4 { background:#F44336; } .tile-5 { background:#E91E63; } .tile-6 { background:#2196F3; }
-        .tile-M { background:linear-gradient(135deg,#FF9800,#F44336,#E91E63); }
-        .dots-container { display:grid; width:44px; height:44px; padding:4px; }
-        .dot { width:10px; height:10px; background:#1a1a1a; border-radius:50%; }
-        .dots-1 { grid-template-columns:1fr; grid-template-rows:1fr; place-items:center; }
-        .dots-1 .dot { width:14px; height:14px; }
-        .dots-2 { grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
-        .dots-2 .dot:nth-child(1) { justify-self:end; align-self:start; }
-        .dots-2 .dot:nth-child(2) { justify-self:start; align-self:end; }
-        .dots-3 { grid-template-columns:1fr 1fr 1fr; grid-template-rows:1fr 1fr 1fr; }
-        .dots-3 .dot:nth-child(1) { grid-column:3; grid-row:1; justify-self:center; align-self:center; }
-        .dots-3 .dot:nth-child(2) { grid-column:2; grid-row:2; justify-self:center; align-self:center; }
-        .dots-3 .dot:nth-child(3) { grid-column:1; grid-row:3; justify-self:center; align-self:center; }
-        .dots-4 { grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; place-items:center; gap:8px; }
-        .dots-5 { grid-template-columns:1fr 1fr 1fr; grid-template-rows:1fr 1fr 1fr; place-items:center; }
-        .dots-5 .dot:nth-child(1) { grid-column:1; grid-row:1; }
-        .dots-5 .dot:nth-child(2) { grid-column:3; grid-row:1; }
-        .dots-5 .dot:nth-child(3) { grid-column:2; grid-row:2; }
-        .dots-5 .dot:nth-child(4) { grid-column:1; grid-row:3; }
-        .dots-5 .dot:nth-child(5) { grid-column:3; grid-row:3; }
-        .dots-6 { grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr 1fr; place-items:center; gap:2px 12px; }
-        .m-letter { font-size:32px; font-weight:900; color:#1a1a1a; text-shadow:none; }
+        .cell.preview-valid { background:#2a3a2a; box-shadow:inset 0 0 0 2px rgba(76,175,80,0.4); }
+        .cell.preview-invalid { background:#3a2a2a; box-shadow:inset 0 0 0 2px rgba(244,67,54,0.4); }
+        .tile-1 { background:#9C27B0; } .tile-2 { background:#FF9800; } .tile-3 { background:#F44336; }
+        .tile-4 { background:#2196F3; } .tile-5 { background:#4CAF50; } .tile-6 { background:#FDD835; }
+        .tile-M { background:#f0f0f0; }
+        .dots-container { position:relative; width:48px; height:48px; }
+        .dot { position:absolute; width:11px; height:11px; background:rgba(0,0,0,0.6); border-radius:50%; box-shadow:inset 0 1px 2px rgba(0,0,0,0.4), 0 0.5px 0 rgba(255,255,255,0.15); }
+        .dots-1 .dot { width:15px; height:15px; top:50%; left:50%; transform:translate(-50%,-50%); }
+        .dots-2 .dot:nth-child(1) { top:15%; right:15%; }
+        .dots-2 .dot:nth-child(2) { bottom:15%; left:15%; }
+        .dots-3 .dot:nth-child(1) { top:12%; right:12%; }
+        .dots-3 .dot:nth-child(2) { top:50%; left:50%; transform:translate(-50%,-50%); }
+        .dots-3 .dot:nth-child(3) { bottom:12%; left:12%; }
+        .dots-4 .dot:nth-child(1) { top:15%; left:15%; }
+        .dots-4 .dot:nth-child(2) { top:15%; right:15%; }
+        .dots-4 .dot:nth-child(3) { bottom:15%; left:15%; }
+        .dots-4 .dot:nth-child(4) { bottom:15%; right:15%; }
+        .dots-5 .dot:nth-child(1) { top:12%; left:12%; }
+        .dots-5 .dot:nth-child(2) { top:12%; right:12%; }
+        .dots-5 .dot:nth-child(3) { top:50%; left:50%; transform:translate(-50%,-50%); }
+        .dots-5 .dot:nth-child(4) { bottom:12%; left:12%; }
+        .dots-5 .dot:nth-child(5) { bottom:12%; right:12%; }
+        .dots-6 .dot:nth-child(1) { top:10%; left:17%; }
+        .dots-6 .dot:nth-child(2) { top:50%; left:17%; transform:translateY(-50%); }
+        .dots-6 .dot:nth-child(3) { bottom:10%; left:17%; }
+        .dots-6 .dot:nth-child(4) { top:10%; right:17%; }
+        .dots-6 .dot:nth-child(5) { top:50%; right:17%; transform:translateY(-50%); }
+        .dots-6 .dot:nth-child(6) { bottom:10%; right:17%; }
+        .m-letter { font-size:32px; font-weight:900; color:#333; text-shadow:none; }
+        .mini-dots { position:relative; width:22px; height:22px; }
+        .mini-dot { position:absolute; width:5px; height:5px; background:rgba(0,0,0,0.55); border-radius:50%; }
+        .mini-dots.dots-1 .mini-dot { width:7px; height:7px; top:50%; left:50%; transform:translate(-50%,-50%); }
+        .mini-dots.dots-2 .mini-dot:nth-child(1) { top:15%; right:15%; }
+        .mini-dots.dots-2 .mini-dot:nth-child(2) { bottom:15%; left:15%; }
+        .mini-dots.dots-3 .mini-dot:nth-child(1) { top:10%; right:10%; }
+        .mini-dots.dots-3 .mini-dot:nth-child(2) { top:50%; left:50%; transform:translate(-50%,-50%); }
+        .mini-dots.dots-3 .mini-dot:nth-child(3) { bottom:10%; left:10%; }
+        .mini-dots.dots-4 .mini-dot:nth-child(1) { top:12%; left:12%; }
+        .mini-dots.dots-4 .mini-dot:nth-child(2) { top:12%; right:12%; }
+        .mini-dots.dots-4 .mini-dot:nth-child(3) { bottom:12%; left:12%; }
+        .mini-dots.dots-4 .mini-dot:nth-child(4) { bottom:12%; right:12%; }
+        .mini-dots.dots-5 .mini-dot:nth-child(1) { top:10%; left:10%; }
+        .mini-dots.dots-5 .mini-dot:nth-child(2) { top:10%; right:10%; }
+        .mini-dots.dots-5 .mini-dot:nth-child(3) { top:50%; left:50%; transform:translate(-50%,-50%); }
+        .mini-dots.dots-5 .mini-dot:nth-child(4) { bottom:10%; left:10%; }
+        .mini-dots.dots-5 .mini-dot:nth-child(5) { bottom:10%; right:10%; }
+        .mini-dots.dots-6 .mini-dot:nth-child(1) { top:8%; left:15%; }
+        .mini-dots.dots-6 .mini-dot:nth-child(2) { top:42%; left:15%; }
+        .mini-dots.dots-6 .mini-dot:nth-child(3) { bottom:8%; left:15%; }
+        .mini-dots.dots-6 .mini-dot:nth-child(4) { top:8%; right:15%; }
+        .mini-dots.dots-6 .mini-dot:nth-child(5) { top:42%; right:15%; }
+        .mini-dots.dots-6 .mini-dot:nth-child(6) { bottom:8%; right:15%; }
+        .mini-m { font-size:15px; font-weight:900; color:rgba(0,0,0,0.6); }
         @keyframes pop-in { 0%{transform:scale(0);opacity:0} 60%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
-        @keyframes merge-pulse { 0%{transform:scale(1)} 30%{transform:scale(1.25)} 60%{transform:scale(0.95)} 100%{transform:scale(1)} }
-        @keyframes bomb-flash { 0%{background:#fff;transform:scale(1.3)} 100%{background:#333;transform:scale(1)} }
+        @keyframes merge-pulse { 0%{transform:scale(1)} 30%{transform:scale(1.3)} 60%{transform:scale(0.95)} 100%{transform:scale(1)} }
         .cell.pop-in { animation:pop-in 0.25s ease-out; }
-        .cell.merge-anim { animation:merge-pulse 0.35s ease-out; }
-        .cell.explode-anim { animation:bomb-flash 0.4s ease-out; }
-        .toolbar { display:flex; align-items:center; justify-content:center; gap:24px; width:100%; padding:10px; flex-shrink:0; }
-        .tool-btn { width:56px; height:56px; background:#333; border:none; border-radius:14px; color:#888; font-size:28px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform 0.1s,background 0.2s; }
+        .cell.merge-anim { animation:merge-pulse 0.4s ease-out; }
+        @keyframes bomb-explode { 0%{transform:scale(1);opacity:1} 20%{transform:scale(1.4);background:#fff;opacity:1} 40%{transform:scale(0.8);opacity:0.8} 60%{transform:scale(1.1);opacity:0.5} 100%{transform:scale(0.3);opacity:0} }
+        @keyframes bomb-shockwave { 0%{box-shadow:0 0 0 0 rgba(255,150,0,0.8);transform:scale(1)} 50%{box-shadow:0 0 30px 15px rgba(255,100,0,0.4);transform:scale(1.15)} 100%{box-shadow:0 0 0 0 rgba(255,50,0,0);transform:scale(1)} }
+        .cell.explode-center { animation:bomb-explode 0.6s ease-out forwards; z-index:10; }
+        .cell.explode-shockwave { animation:bomb-shockwave 0.5s ease-out; }
+        .bomb-overlay { position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:50;animation:screen-flash 0.3s ease-out; }
+        @keyframes screen-flash { 0%{background:rgba(255,200,0,0.4)} 100%{background:transparent} }
+        @keyframes score-fly { 0%{opacity:1;transform:translate(-50%,-50%) scale(0.5)} 30%{transform:translate(-50%,-50%) scale(1.2)} 100%{opacity:0;transform:translate(-50%,-120%) scale(1)} }
+        .toolbar { display:flex; align-items:center; justify-content:center; gap:20px; width:100%; padding:8px; flex-shrink:0; }
+        .tool-btn { width:52px; height:52px; background:#333; border:none; border-radius:13px; color:#888; font-size:26px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform 0.1s; position:relative; }
         .tool-btn:active { transform:scale(0.92); background:#444; }
         .tool-btn:disabled { opacity:0.3; cursor:default; }
         .tool-btn:disabled:active { transform:none; background:#333; }
-        .trash-count { position:absolute; top:-4px; right:-4px; background:#F44336; color:#fff; font-size:12px; font-weight:700; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+        .trash-count { position:absolute; top:-4px; right:-4px; background:#F44336; color:#fff; font-size:11px; font-weight:700; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
         .overlay { display:none; position:fixed; top:0;left:0;right:0;bottom:0; background:rgba(0,0,0,0.85); z-index:100; flex-direction:column; align-items:center; justify-content:center; gap:16px; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
         .overlay.active { display:flex; }
-        .overlay h2 { font-size:40px; font-weight:900; color:#fff; }
+        .overlay h2 { font-size:40px; font-weight:900; }
         .overlay .final-score { font-size:56px; font-weight:900; color:#FF9800; }
         .overlay .final-label { font-size:16px; color:#888; margin-top:-8px; }
-        .btn { background:#4CAF50; border:none; color:#fff; font-size:18px; font-weight:700; padding:14px 44px; border-radius:16px; cursor:pointer; margin-top:12px; transition:transform 0.15s; }
+        .btn { background:#4CAF50; border:none; color:#fff; font-size:18px; font-weight:700; padding:14px 44px; border-radius:16px; cursor:pointer; margin-top:12px; }
         .btn:active { transform:scale(0.95); }
-        @media(max-width:380px) { .cell{width:56px;height:56px;border-radius:12px} .dots-container{width:38px;height:38px} .dot{width:8px;height:8px} .dots-1 .dot{width:12px;height:12px} .grid{gap:5px;padding:6px} .highest-tile{font-size:52px} }
-        @media(max-height:700px) { .cell{width:52px;height:52px} .dots-container{width:36px;height:36px} .dot{width:8px;height:8px} .dots-1 .dot{width:11px;height:11px} .grid{gap:4px;padding:6px} }
+        @media(max-width:380px) { .cell{width:54px;height:54px} .dots-container{width:42px;height:42px} .dot{width:10px;height:10px} .dots-1 .dot{width:13px;height:13px} .grid{gap:4px;padding:6px} }
+        @media(max-height:700px) { .cell{width:50px;height:50px} .dots-container{width:38px;height:38px} .dot{width:9px;height:9px} .dots-1 .dot{width:12px;height:12px} .grid{gap:4px;padding:5px} .shape-cell{width:24px;height:24px} }
     </style>
 </head>
 <body>
@@ -81,49 +119,62 @@
             </div>
             <div class="highest-tile" id="highestDisplay">1</div>
         </div>
-        <div class="next-area">
-            <span class="next-label">Next:</span>
-            <div class="next-preview" id="nextTile"></div>
+        <div class="shape-area">
+            <button class="rotate-btn" onclick="rotateShape()">&#10227;</button>
+            <div id="shapePreview"></div>
+            <button class="rotate-btn" onclick="rotateShape()">&#10227;</button>
         </div>
         <div class="grid-area"><div class="grid" id="grid"></div></div>
         <div class="toolbar">
             <button class="tool-btn" id="undoBtn" disabled onclick="undo()">&#8617;</button>
-            <button class="tool-btn" id="trashBtn" onclick="toggleTrashMode()" style="position:relative">&#128465;<span class="trash-count" id="trashCount">3</span></button>
+            <button class="tool-btn" id="trashBtn" onclick="skipShape()" style="position:relative">&#128465;<span class="trash-count" id="trashCount">-50</span></button>
         </div>
     </div>
     <div class="overlay" id="overlay">
         <h2>Game Over!</h2>
+        <div id="endDetails" style="text-align:center;margin:8px 0;font-size:14px;color:#aaa;line-height:1.8"></div>
         <div class="final-score" id="finalScore">0</div>
-        <div class="final-label">Punkte</div>
+        <div class="final-label">Gesamt</div>
+        <div id="highscoreMsg" style="font-size:16px;color:#4CAF50;font-weight:700;margin-top:4px"></div>
         <button class="btn" onclick="restartGame()">Nochmal spielen</button>
     </div>
-    <script>
-        const COLS=5,ROWS=5;
-        const TILE_CLASSES={1:'tile-1',2:'tile-2',3:'tile-3',4:'tile-4',5:'tile-5',6:'tile-6','M':'tile-M'};
-        const NEXT_VALUE={1:2,2:3,3:4,4:5,5:6,6:'M','M':'BOMB'};
-        const MERGE_POINTS={1:10,2:30,3:90,4:270,5:810,6:2430,'M':7290};
-        const VALUE_ORDER=[1,2,3,4,5,6,'M'];
-        let grid=[],score=0,bestScore=parseInt(localStorage.getItem('merged_best')||'0'),nextTile=1,prevState=null,trashUses=3,highestTile=1;
-        function createDots(v){if(v==='M'){const s=document.createElement('span');s.className='m-letter';s.textContent='M';return s}const c=document.createElement('div');c.className='dots-container dots-'+v;for(let i=0;i<v;i++){const d=document.createElement('div');d.className='dot';c.appendChild(d)}return c}
-        function init(){grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));score=0;highestTile=1;trashUses=3;prevState=null;document.getElementById('undoBtn').disabled=true;updateTrashUI();updateScore();updateHighest();generateNextTile();renderGrid();document.getElementById('overlay').classList.remove('active')}
-        function renderGrid(){const g=document.getElementById('grid');g.innerHTML='';g.style.gridTemplateRows='repeat('+ROWS+',1fr)';for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const cell=document.createElement('div');cell.className='cell';cell.dataset.row=r;cell.dataset.col=c;const v=grid[r][c];if(v!==0){cell.classList.add(TILE_CLASSES[v],'occupied');cell.appendChild(createDots(v))}else{cell.addEventListener('click',()=>placeTile(r,c))}g.appendChild(cell)}}
-        function updateScore(){document.getElementById('score').textContent=score.toLocaleString();if(score>bestScore){bestScore=score;localStorage.setItem('merged_best',bestScore)}document.getElementById('best').textContent=bestScore.toLocaleString()}
-        function updateHighest(){let m=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const v=grid[r][c];if(v!==0){const i=VALUE_ORDER.indexOf(v);if(i>m)m=i}}highestTile=VALUE_ORDER[m];document.getElementById('highestDisplay').textContent=highestTile==='M'?'M':highestTile}
-        function renderNextTile(){const e=document.getElementById('nextTile');e.innerHTML='';e.className='next-preview '+TILE_CLASSES[nextTile];e.appendChild(createDots(nextTile))}
-        function generateNextTile(){const r=Math.random();if(r<0.45)nextTile=1;else if(r<0.78)nextTile=2;else if(r<0.93)nextTile=3;else nextTile=4;renderNextTile()}
-        function placeTile(row,col){if(grid[row][col]!==0)return;prevState={grid:grid.map(r=>[...r]),score:score,nextTile:nextTile,trashUses:trashUses};document.getElementById('undoBtn').disabled=false;grid[row][col]=nextTile;renderGrid();animateCell(row,col,'pop-in');if(navigator.vibrate)navigator.vibrate(10);setTimeout(()=>checkMerges(row,col),150)}
-        function animateCell(row,col,cls){const i=row*COLS+col;const cells=document.querySelectorAll('.cell');if(cells[i])cells[i].classList.add(cls)}
-        function checkMerges(pr,pc){const v=grid[pr][pc];if(v===0){afterMerge();return}const conn=findConnected(pr,pc,v);if(conn.length>=3){const nv=NEXT_VALUE[v];score+=MERGE_POINTS[v]*conn.length;updateScore();if(nv==='BOMB'){for(const[r,c]of conn)grid[r][c]=0;triggerBomb(pr,pc);return}for(const[r,c]of conn)grid[r][c]=0;grid[pr][pc]=nv;updateHighest();renderGrid();animateCell(pr,pc,'merge-anim');if(navigator.vibrate)navigator.vibrate([20,30,20]);setTimeout(()=>checkMerges(pr,pc),300)}else{afterMerge()}}
-        function findConnected(row,col,val){const visited=new Set(),result=[],stack=[[row,col]];while(stack.length>0){const[r,c]=stack.pop();const k=r+','+c;if(visited.has(k))continue;if(r<0||r>=ROWS||c<0||c>=COLS)continue;if(grid[r][c]!==val)continue;visited.add(k);result.push([r,c]);stack.push([r-1,c],[r+1,c],[r,c-1],[r,c+1])}return result}
-        function triggerBomb(row,col){const tc=[];for(let r=row-1;r<=row+1;r++)for(let c=col-1;c<=col+1;c++)if(r>=0&&r<ROWS&&c>=0&&c<COLS){tc.push([r,c]);grid[r][c]=0}score+=500;updateScore();updateHighest();renderGrid();for(const[r,c]of tc)animateCell(r,c,'explode-anim');if(navigator.vibrate)navigator.vibrate([30,50,30,50,30]);setTimeout(()=>{renderGrid();afterMerge()},450)}
-        function afterMerge(){generateNextTile();if(isGridFull())setTimeout(()=>{document.getElementById('finalScore').textContent=score.toLocaleString();document.getElementById('overlay').classList.add('active')},300)}
-        function isGridFull(){for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c]===0)return false;return true}
-        const TRASH_COST=50;
-        function toggleTrashMode(){if(trashUses<=0)return;prevState={grid:grid.map(r=>[...r]),score:score,nextTile:nextTile,trashUses:trashUses};document.getElementById('undoBtn').disabled=false;score=Math.max(0,score-TRASH_COST);trashUses--;updateScore();updateTrashUI();generateNextTile();if(navigator.vibrate)navigator.vibrate([15,20,15])}
-        function updateTrashUI(){document.getElementById('trashCount').textContent=trashUses;document.getElementById('trashBtn').disabled=trashUses<=0}
-        function undo(){if(!prevState)return;grid=prevState.grid;score=prevState.score;nextTile=prevState.nextTile;trashUses=prevState.trashUses;prevState=null;document.getElementById('undoBtn').disabled=true;updateScore();updateTrashUI();updateHighest();renderNextTile();renderGrid()}
-        function restartGame(){init()}
-        init();
-    </script>
+<script>
+const COLS=5,ROWS=5;
+const TILE_CLASSES={1:'tile-1',2:'tile-2',3:'tile-3',4:'tile-4',5:'tile-5',6:'tile-6','M':'tile-M'};
+const NEXT_VALUE={1:2,2:3,3:4,4:5,5:6,6:'M','M':'BOMB'};
+const VALUE_ORDER=[1,2,3,4,5,6,'M'];
+let grid=[],score=0,bestScore=parseInt(localStorage.getItem('merged_best3')||'0'),prevState=null,trashUses=0,highestTile=1,unlockedValues=[1],currentShape=null,hoverPos=null,totalMerges=0;
+const BASE_POINTS={1:10,2:30,3:90,4:270,5:810,6:2430,'M':7290};
+function getGridFullness(){let f=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c]!==0)f++;return f/(ROWS*COLS)}
+function getDifficultyMultiplier(){return 1+getGridFullness()*2}
+function calcMergeScore(v,g){return Math.round(BASE_POINTS[v]*g*getDifficultyMultiplier())}
+function calcTrashPenalty(){const u=trashUses+1;return u*u*50}
+function calcEndBonus(){let b=0;const tb={1:0,2:50,3:200,4:500,5:1500,6:5000,'M':15000};b+=tb[highestTile]||0;b+=totalMerges*10;b+=(unlockedValues.length-1)*200;return b}
+function createDots(v,mini){if(v==='M'){const s=document.createElement('span');s.className=mini?'mini-m':'m-letter';s.textContent='M';return s}const c=document.createElement('div');c.className=(mini?'mini-dots ':'dots-container ')+'dots-'+v;for(let i=0;i<v;i++){const d=document.createElement('div');d.className=mini?'mini-dot':'dot';c.appendChild(d)}return c}
+function pickValue(){if(unlockedValues.length===1)return 1;const w=unlockedValues.map(v=>Math.max(1,10-VALUE_ORDER.indexOf(v)*2));const t=w.reduce((a,b)=>a+b,0);let r=Math.random()*t;for(let i=0;i<unlockedValues.length;i++){r-=w[i];if(r<=0)return unlockedValues[i]}return unlockedValues[0]}
+function generateShape(){if(Math.random()<0.35){currentShape=[{r:0,c:0,value:pickValue()}]}else{currentShape=[{r:0,c:0,value:pickValue()},{r:0,c:1,value:pickValue()}]}renderShapePreview()}
+function rotateShape(){if(!currentShape||currentShape.length<2)return;const rot=currentShape.map(c=>({...c,r:c.c,c:-c.r}));const mr=Math.min(...rot.map(c=>c.r)),mc=Math.min(...rot.map(c=>c.c));currentShape=rot.map(c=>({...c,r:c.r-mr,c:c.c-mc}));renderShapePreview();if(hoverPos)renderGrid()}
+function renderShapePreview(){const ct=document.getElementById('shapePreview');ct.innerHTML='';if(!currentShape)return;const mr=Math.max(...currentShape.map(c=>c.r))+1,mc=Math.max(...currentShape.map(c=>c.c))+1;ct.style.gridTemplateColumns='repeat('+mc+',28px)';ct.style.gridTemplateRows='repeat('+mr+',28px)';ct.style.display='grid';ct.style.gap='3px';const cm={};for(const c of currentShape)cm[c.r+','+c.c]=c.value;for(let r=0;r<mr;r++)for(let c=0;c<mc;c++){const d=document.createElement('div');d.className='shape-cell';const k=r+','+c;if(cm[k]!==undefined){d.classList.add('filled',TILE_CLASSES[cm[k]]);d.appendChild(createDots(cm[k],true))}else{d.classList.add('empty')}ct.appendChild(d)}}
+function canPlaceShape(row,col){if(!currentShape)return false;for(const c of currentShape){const r=row+c.r,cc=col+c.c;if(r<0||r>=ROWS||cc<0||cc>=COLS)return false;if(grid[r][cc]!==0)return false}return true}
+function placeShape(row,col){if(!canPlaceShape(row,col))return;prevState={grid:grid.map(r=>[...r]),score,unlockedValues:[...unlockedValues],trashUses,totalMerges,currentShape:JSON.parse(JSON.stringify(currentShape))};document.getElementById('undoBtn').disabled=false;const pc=[];for(const c of currentShape){const r=row+c.r,cc=col+c.c;grid[r][cc]=c.value;pc.push([r,cc])}hoverPos=null;renderGrid();for(const[r,c]of pc)animateCell(r,c,'pop-in');if(navigator.vibrate)navigator.vibrate(10);setTimeout(()=>checkAllMerges(),150)}
+function checkAllMerges(){let merged=false;const vis=new Set();for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const v=grid[r][c];if(v===0||vis.has(r+','+c))continue;const conn=findConnected(r,c,v);for(const[cr,cc]of conn)vis.add(cr+','+cc);if(conn.length>=3){merged=true;totalMerges++;const nv=NEXT_VALUE[v];const pts=calcMergeScore(v,conn.length);score+=pts;updateScore();showPointsPop(pts);const ctr=conn[Math.floor(conn.length/2)];if(nv==='BOMB'){for(const[cr,cc]of conn)grid[cr][cc]=0;triggerBomb(ctr[0],ctr[1]);return}for(const[cr,cc]of conn)grid[cr][cc]=0;grid[ctr[0]][ctr[1]]=nv;if(!unlockedValues.includes(nv)&&nv!=='BOMB'){unlockedValues.push(nv);unlockedValues.sort((a,b)=>VALUE_ORDER.indexOf(a)-VALUE_ORDER.indexOf(b))}updateHighest();renderGrid();animateCell(ctr[0],ctr[1],'merge-anim');if(navigator.vibrate)navigator.vibrate([20,30,20])}}if(merged)setTimeout(()=>checkAllMerges(),300);else afterMerge()}
+function findConnected(row,col,val){const vis=new Set(),res=[],stk=[[row,col]];while(stk.length>0){const[r,c]=stk.pop();const k=r+','+c;if(vis.has(k))continue;if(r<0||r>=ROWS||c<0||c>=COLS)continue;if(grid[r][c]!==val)continue;vis.add(k);res.push([r,c]);stk.push([r-1,c],[r+1,c],[r,c-1],[r,c+1])}return res}
+function triggerBomb(row,col){const tc=[];for(let r=row-1;r<=row+1;r++)for(let c=col-1;c<=col+1;c++)if(r>=0&&r<ROWS&&c>=0&&c<COLS){tc.push([r,c]);grid[r][c]=0}const bb=Math.round(500*getDifficultyMultiplier());score+=bb;updateScore();showPointsPop(bb);updateHighest();renderGrid();const fl=document.createElement('div');fl.className='bomb-overlay';document.body.appendChild(fl);setTimeout(()=>fl.remove(),400);for(const[r,c]of tc){const i=r*COLS+c;const cells=document.querySelectorAll('.cell');if(!cells[i])continue;cells[i].classList.add(r===row&&c===col?'explode-center':'explode-shockwave')}if(navigator.vibrate)navigator.vibrate([50,30,80,30,50]);setTimeout(()=>{renderGrid();checkAllMerges()},650)}
+function afterMerge(){generateShape();if(isGameOver())setTimeout(()=>showGameOver(),300)}
+function showGameOver(){const bonus=calcEndBonus();const gs=score;const ts=gs+bonus;score=ts;const at=parseInt(localStorage.getItem('merged_alltime')||'0');localStorage.setItem('merged_alltime',at+ts);if(ts>bestScore){bestScore=ts;localStorage.setItem('merged_best3',bestScore)}document.getElementById('endDetails').innerHTML='Spielpunkte: '+gs.toLocaleString()+'<br>Bonus ('+( highestTile==='M'?'M':highestTile)+'-Tile, '+totalMerges+' Merges): +'+bonus.toLocaleString()+'<br>Papierkorb: '+trashUses+'x genutzt';document.getElementById('finalScore').textContent=ts.toLocaleString();const h=document.getElementById('highscoreMsg');if(ts>=bestScore){h.textContent='Neuer Highscore!';h.style.color='#FF9800'}else{h.textContent='Highscore: '+bestScore.toLocaleString();h.style.color='#4CAF50'}updateScore();document.getElementById('overlay').classList.add('active')}
+function isGameOver(){if(!currentShape)return true;const orig=JSON.parse(JSON.stringify(currentShape));for(let rot=0;rot<4;rot++){for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(canPlaceShape(r,c)){currentShape=orig;return false}const rt=currentShape.map(c=>({...c,r:c.c,c:-c.r}));const mr=Math.min(...rt.map(c=>c.r)),mc=Math.min(...rt.map(c=>c.c));currentShape=rt.map(c=>({...c,r:c.r-mr,c:c.c-mc}))}currentShape=orig;return true}
+function renderGrid(){const g=document.getElementById('grid');g.innerHTML='';let pm={},vp=false;if(hoverPos&&currentShape){vp=canPlaceShape(hoverPos[0],hoverPos[1]);for(const c of currentShape){const r=hoverPos[0]+c.r,cc=hoverPos[1]+c.c;if(r>=0&&r<ROWS&&cc>=0&&cc<COLS)pm[r+','+cc]=c.value}}for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const cell=document.createElement('div');cell.className='cell';const v=grid[r][c];if(v!==0){cell.classList.add(TILE_CLASSES[v],'occupied');cell.appendChild(createDots(v,false))}else{const pk=r+','+c;if(pm[pk]!==undefined){cell.classList.add(vp?'preview-valid':'preview-invalid');if(vp){cell.classList.add(TILE_CLASSES[pm[pk]]);cell.style.opacity='0.4';cell.appendChild(createDots(pm[pk],false))}}cell.addEventListener('click',()=>placeShape(r,c));cell.addEventListener('mouseenter',()=>{hoverPos=[r,c];renderGrid()});cell.addEventListener('touchstart',(e)=>{const t=e.touches[0];const rect=g.getBoundingClientRect();const cs=rect.width/COLS;const tc=Math.floor((t.clientX-rect.left)/cs);const tr=Math.floor((t.clientY-rect.top)/(rect.height/ROWS));if(tr>=0&&tr<ROWS&&tc>=0&&tc<COLS){hoverPos=[tr,tc];renderGrid()}},{passive:true})}g.appendChild(cell)}}
+function animateCell(r,c,cls){const i=r*COLS+c;const cells=document.querySelectorAll('.cell');if(cells[i])cells[i].classList.add(cls)}
+function updateScore(){document.getElementById('score').textContent=score.toLocaleString();if(score>bestScore){bestScore=score;localStorage.setItem('merged_best3',bestScore)}document.getElementById('best').textContent=bestScore.toLocaleString()}
+function showPointsPop(p){const d=document.createElement('div');d.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:900;pointer-events:none;z-index:60;text-shadow:0 2px 8px rgba(0,0,0,0.5);animation:score-fly 0.8s ease-out forwards;';d.style.color=p>=0?'#4CAF50':'#F44336';d.textContent=(p>=0?'+':'')+p.toLocaleString();document.body.appendChild(d);setTimeout(()=>d.remove(),900)}
+function updateHighest(){let m=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const v=grid[r][c];if(v!==0){const i=VALUE_ORDER.indexOf(v);if(i>m)m=i}}highestTile=VALUE_ORDER[m];document.getElementById('highestDisplay').textContent=highestTile==='M'?'M':highestTile}
+function skipShape(){const p=calcTrashPenalty();prevState={grid:grid.map(r=>[...r]),score,unlockedValues:[...unlockedValues],trashUses,totalMerges,currentShape:JSON.parse(JSON.stringify(currentShape))};document.getElementById('undoBtn').disabled=false;score=Math.max(0,score-p);trashUses++;updateScore();updateTrashUI();showPointsPop(-p);generateShape();if(navigator.vibrate)navigator.vibrate([15,20,15])}
+function updateTrashUI(){document.getElementById('trashCount').textContent='-'+calcTrashPenalty()}
+function undo(){if(!prevState)return;grid=prevState.grid;score=prevState.score;unlockedValues=prevState.unlockedValues;trashUses=prevState.trashUses;totalMerges=prevState.totalMerges||totalMerges;currentShape=prevState.currentShape;prevState=null;document.getElementById('undoBtn').disabled=true;hoverPos=null;updateScore();updateTrashUI();updateHighest();renderShapePreview();renderGrid()}
+function init(){grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));score=0;highestTile=1;trashUses=0;totalMerges=0;unlockedValues=[1];prevState=null;hoverPos=null;document.getElementById('undoBtn').disabled=true;updateTrashUI();updateScore();updateHighest();generateShape();renderGrid();document.getElementById('overlay').classList.remove('active')}
+function restartGame(){init()}
+document.addEventListener('mouseleave',()=>{hoverPos=null;renderGrid()});
+init();
+</script>
 </body>
 </html>
