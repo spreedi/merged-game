@@ -260,7 +260,8 @@ const VALUE_ORDER = [1,2,3,4,5,6,'M'];
 // === STATE ===
 let grid = [];
 let lastPlacedCells = []; // tracks where tiles were just placed (for merge target)
-let score = parseInt(localStorage.getItem('merged_career') || '0'); // persistent career score
+let roundScore = 0; // resets each game
+let careerScore = parseInt(localStorage.getItem('merged_career') || '0'); // persists forever
 let bestScore = parseInt(localStorage.getItem('merged_best3') || '0');
 let prevState = null;
 let trashUses = 0;
@@ -297,7 +298,7 @@ function getDifficultyMultiplier() {
 }
 
 // === LEVEL SYSTEM ===
-function calcLevel() { return Math.floor(score / LEVEL_THRESHOLD) + 1; }
+function calcLevel() { return Math.floor(careerScore / LEVEL_THRESHOLD) + 1; }
 
 function updateLevel() {
     const newLevel = calcLevel();
@@ -311,7 +312,7 @@ function updateLevel() {
     document.getElementById('levelDisplay').textContent = currentLevel;
     // Progress bar within current level
     const levelStart = (currentLevel - 1) * LEVEL_THRESHOLD;
-    const progressPts = score - levelStart;
+    const progressPts = careerScore - levelStart;
     const progress = (progressPts / LEVEL_THRESHOLD) * 100;
     document.getElementById('levelBar').style.width = Math.min(100, progress) + '%';
     // Progress text
@@ -493,7 +494,7 @@ function placeShape(row, col) {
     // Save state for undo
     prevState = {
         grid: grid.map(r => [...r]),
-        score, unlockedValues: [...unlockedValues],
+        roundScore, unlockedValues: [...unlockedValues],
         trashUses, totalMerges, currentShape: JSON.parse(JSON.stringify(currentShape))
     };
     document.getElementById('undoBtn').disabled = false;
@@ -580,7 +581,7 @@ function checkAllMerges() {
                 const cascadeMultiplier = Math.pow(2, cascadeCount - 1);
                 const basePoints = calcMergeScore(val, connected.length);
                 const mergePoints = Math.round(basePoints * cascadeMultiplier);
-                score += mergePoints;
+                roundScore += mergePoints;
                 updateScore();
                 if (cascadeCount > 1) {
                     showPointsPop(mergePoints, 'COMBO x' + cascadeMultiplier + '!');
@@ -665,7 +666,7 @@ function triggerBomb(row, col) {
                 grid[r][c] = 0;
             }
     const bombBonus = Math.round(500 * getDifficultyMultiplier());
-    score += bombBonus;
+    roundScore += bombBonus;
     updateScore();
     showPointsPop(bombBonus);
     updateHighest();
@@ -744,14 +745,14 @@ function showGameOver() {
     stopTimer();
     const gameTime = formatTime(Date.now() - gameStartTime);
     const bonus = calcEndBonus();
-    const roundScore = score - parseInt(localStorage.getItem('merged_career') || '0');
-    score += bonus;
+    roundScore += bonus;
 
-    // Save career score (persists!)
-    localStorage.setItem('merged_career', score);
+    // Add round score to career
+    careerScore += roundScore;
+    localStorage.setItem('merged_career', careerScore);
 
-    if (score > bestScore) {
-        bestScore = score;
+    if (careerScore > bestScore) {
+        bestScore = careerScore;
         localStorage.setItem('merged_best3', bestScore);
     }
 
@@ -763,14 +764,15 @@ function showGameOver() {
         `Papierkorb: ${trashUses}x genutzt<br>` +
         `Level: ${currentLevel}`;
 
-    document.getElementById('finalScore').textContent = score.toLocaleString();
+    document.getElementById('finalScore').textContent = careerScore.toLocaleString();
 
     const hsMsg = document.getElementById('highscoreMsg');
-    if (score >= bestScore) {
-        hsMsg.textContent = '🏆 Neuer Highscore!';
+    if (roundScore > parseInt(localStorage.getItem('merged_best_round') || '0')) {
+        localStorage.setItem('merged_best_round', roundScore);
+        hsMsg.textContent = '🏆 Neuer Runden-Highscore!';
         hsMsg.style.color = '#FF9800';
     } else {
-        hsMsg.textContent = `Highscore: ${bestScore.toLocaleString()}`;
+        hsMsg.textContent = `Bester Runden-Score: ${parseInt(localStorage.getItem('merged_best_round') || '0').toLocaleString()}`;
         hsMsg.style.color = '#4CAF50';
     }
 
@@ -824,14 +826,8 @@ function animateCell(row, col, cls) {
 }
 
 function updateScore() {
-    document.getElementById('score').textContent = score.toLocaleString();
-    if (score > bestScore) {
-        bestScore = score;
-        localStorage.setItem('merged_best3', bestScore);
-    }
-    document.getElementById('best').textContent = bestScore.toLocaleString();
-    // Save career score continuously
-    localStorage.setItem('merged_career', score);
+    document.getElementById('score').textContent = roundScore.toLocaleString();
+    document.getElementById('best').textContent = careerScore.toLocaleString();
     updateLevel();
 }
 
@@ -891,11 +887,11 @@ function skipShape() {
     const penalty = calcTrashPenalty();
     prevState = {
         grid: grid.map(r => [...r]),
-        score, unlockedValues: [...unlockedValues],
+        roundScore, unlockedValues: [...unlockedValues],
         trashUses, totalMerges, currentShape: JSON.parse(JSON.stringify(currentShape))
     };
     document.getElementById('undoBtn').disabled = false;
-    score = Math.max(0, score - penalty);
+    roundScore = Math.max(0, roundScore - penalty);
     trashUses++;
     updateScore();
     updateTrashUI();
@@ -913,7 +909,7 @@ function updateTrashUI() {
 function undo() {
     if (!prevState) return;
     grid = prevState.grid;
-    score = prevState.score;
+    roundScore = prevState.roundScore;
     unlockedValues = prevState.unlockedValues;
     trashUses = prevState.trashUses;
     totalMerges = prevState.totalMerges || totalMerges;
@@ -931,8 +927,8 @@ function undo() {
 // === INIT ===
 function init() {
     grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-    // Score persists! Load career score
-    score = parseInt(localStorage.getItem('merged_career') || '0');
+    roundScore = 0; // resets each game
+    careerScore = parseInt(localStorage.getItem('merged_career') || '0');
     bestScore = parseInt(localStorage.getItem('merged_best3') || '0');
     highestTile = 1;
     trashUses = 0;
@@ -965,6 +961,7 @@ function confirmRestart() {
 function resetAllProgress() {
     localStorage.removeItem('merged_career');
     localStorage.removeItem('merged_best3');
+    localStorage.removeItem('merged_best_round');
     init();
 }
 
