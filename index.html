@@ -209,6 +209,7 @@
         <div class="score-bar">
             <div class="score-left">
                 <div class="score-row"><span class="score-label">Score</span><span class="score-value" id="score">0</span></div>
+                <div class="score-row"><span class="score-label">Rekord</span><span class="score-value" id="bestRound" style="color:#4CAF50;font-size:14px">0</span></div>
                 <div class="score-row"><span class="score-label">Karriere</span><span class="score-value" id="best" style="color:#FF9800">0</span></div>
                 <div class="level-container">
                     <div class="level-header">
@@ -263,6 +264,7 @@ let lastPlacedCells = []; // tracks where tiles were just placed (for merge targ
 let roundScore = 0; // resets each game
 let careerScore = parseInt(localStorage.getItem('merged_career') || '0'); // persists forever
 let bestScore = parseInt(localStorage.getItem('merged_best3') || '0');
+let bestRoundScore = parseInt(localStorage.getItem('merged_best_round') || '0');
 let prevState = null;
 let trashUses = 0;
 let highestTile = 1;
@@ -828,6 +830,11 @@ function animateCell(row, col, cls) {
 function updateScore() {
     document.getElementById('score').textContent = roundScore.toLocaleString();
     document.getElementById('best').textContent = careerScore.toLocaleString();
+    if (roundScore > bestRoundScore) {
+        bestRoundScore = roundScore;
+        localStorage.setItem('merged_best_round', bestRoundScore);
+    }
+    document.getElementById('bestRound').textContent = bestRoundScore.toLocaleString();
     updateLevel();
 }
 
@@ -930,6 +937,7 @@ function init() {
     roundScore = 0; // resets each game
     careerScore = parseInt(localStorage.getItem('merged_career') || '0');
     bestScore = parseInt(localStorage.getItem('merged_best3') || '0');
+    bestRoundScore = parseInt(localStorage.getItem('merged_best_round') || '0');
     highestTile = 1;
     trashUses = 0;
     totalMerges = 0;
