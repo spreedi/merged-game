@@ -1,4 +1,4 @@
-const CACHE_NAME = 'merged-v1';
+const CACHE_NAME = 'merged-v2';
 const ASSETS = [
   '/merged-game/',
   '/merged-game/index.html',
